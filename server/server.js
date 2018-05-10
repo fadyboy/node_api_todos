@@ -8,6 +8,7 @@ var {User} = require("./models/user");
 
 // create instance of app and listen on specfied port
 var app = express();
+const port = process.env.PORT || 3000;
 app.use(bodyParser.json()); // Configure app middleware
 
 // route to create todos
@@ -49,8 +50,8 @@ app.get("/todos/:id", (req, res) => {
     })
 });
 
-app.listen(3000, ()=>{
-    console.log("Listenting on port 3000");
+app.listen(port, ()=>{
+    console.log(`Listening or port ${port}`);
 })
 
 module.exports = {app};
