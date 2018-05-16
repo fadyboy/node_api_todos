@@ -1,6 +1,7 @@
-var express = require("express");
-var bodyParser = require("body-parser");
-var {ObjectID} = require("mongodb");
+const express = require("express");
+const bodyParser = require("body-parser");
+const {ObjectID} = require("mongodb");
+const _ = require("lodash");
 
 var {mongoose} = require("./db/mongoose");
 var {Todo} = require("./models/todo");
@@ -50,7 +51,7 @@ app.get("/todos/:id", (req, res) => {
     })
 });
 
-// route to delete a specific to
+// route to delete a specific todo
 app.delete("/todos/:id", (req, res) => {
     var id = req.params.id;
     // check if id is valid
@@ -67,7 +68,32 @@ app.delete("/todos/:id", (req, res) => {
     })
 });
 
-app.listen(port, ()=>{
+// route to update a specific todo
+app.patch("/todos/:id", (req, res) => {
+    var id = req.params.id;
+    var body = _.pick(req.body, ["text", "completed"])
+    // check id is valid
+    if(!ObjectID.isValid(id)){
+        return res.status(404).send({msg:"No such todo found"});
+    }
+    if(_.isBoolean(body.completed) && body.completed){
+        // if completed is set to true get timestamp
+        body.completedAt = new Date().getTime();
+    } else {
+        body.completed = false;
+        body.completedAt = null;
+    }
+    Todo.findByIdAndUpdate(id, {$set:body}, {new:true}).then((todo) => {
+        if(!todo) {
+            return res.status(404).send({msg:"No todo found"});
+        }
+        res.send({todo});
+    }).catch((err) => {
+        res.status(400).send();
+    })
+});
+
+app.listen(port, () => {
     console.log(`Listening or port ${port}`);
 })
 
