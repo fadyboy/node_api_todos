@@ -8,7 +8,7 @@ const {Todo} = require('./../models/todo');
 // Create sample todos for GET test
 const todos = [
     {_id:  new ObjectID(), text: "This is my first todo"},
-    {_id: new ObjectID(), text: "This is my second todo"},
+    {_id: new ObjectID(), text: "This is my second todo", completed: true, completedAt: 1246},
     {_id: new ObjectID(),text: "This is my third todo"}
 ];
 
@@ -114,7 +114,7 @@ describe('GET /todos/:id', () => {
 describe('DELETE /todos/:id', () => {
     it('Should delete the specified todo', (done) => {
         var delId = todos[0]._id.toHexString(); // get id of 1st todo
-        var todosInitialLength = todos.length;
+
         request(app)
           .delete(`/todos/${delId}`)
           .expect(200)
@@ -146,5 +146,83 @@ describe('DELETE /todos/:id', () => {
           .expect(404)
           .end(done);
     });
+});
 
-})
+describe('PATCH /todos/:id', () => {
+    it('Should update the todo', (done) => {
+        var todoId = todos[0]._id.toHexString();
+        var changes = {
+            text: "The text has changed",
+            completed: true
+        };
+        request(app)
+          .patch(`/todos/${todoId}`)
+          .send(changes)
+          .expect(200)
+          .end((err, res) => {
+              if(err) {
+                  return done(err);
+              }
+              Todo.findByIdAndUpdate(todoId, {$set:changes}).then((todo) =>{
+                expect(todo.text).toBe(changes.text);
+                expect(todo.completed).toBe(changes.completed);
+                expect(typeof todo.completedAt).toBe('number');
+                done();
+              }).catch((err) => done(err))
+          })
+    });
+
+    it('Should clear completedAt property when todo is not completed', (done) => {
+        var todoId = todos[1]._id.toHexString();
+        var changes = {
+            completed: false
+        };
+        request(app)
+          .patch(`/todos/${todoId}`)
+          .send(changes)
+          .expect(200)
+          .end((err, res) => {
+              if(err) {
+                  return done(err);
+              }
+              Todo.findByIdAndUpdate(todoId, {$set:changes}).then((todo) => {
+                  expect(todo.text).toBe(todos[1].text);
+                  expect(todo.completed).toBe(false);
+                  expect(todo.completedAt).toBe(null);
+                  done();
+              }).catch((err) => done(err))
+          })
+    });
+
+    it('Should update this other todo', (done) => {
+        var id = todos[2]._id.toHexString();
+        var changes = {
+            completed: true,
+            text: "This na sure banker"
+        }
+        request(app)
+          .patch(`/todos/${id}`)
+          .send(changes)
+          .expect(200)
+          .expect((res) => {
+              expect(res.body.todo.text).toBe(changes.text)
+              expect(res.body.todo.completed).toBe(true)
+              expect(typeof res.body.todo.completedAt).toBe('number')
+          })
+          .end(done);
+    });
+
+    it('Should remove the completedAt value to null v2', (done) => {
+        var id = todos[1]._id.toHexString();
+        request(app)
+          .patch(`/todos/${id}`)
+          .send({completed:false})
+          .expect(200)
+          .expect((res) => {
+              expect(res.body.todo.completed).toBe(false)
+              expect(res.body.todo.completedAt).toBe(null)
+              expect(res.body.todo.text).toBe(todos[1].text)
+          })
+          .end(done);
+    });
+});
