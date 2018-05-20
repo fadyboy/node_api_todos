@@ -1,3 +1,6 @@
+// get config settings
+require("../server/config/config");
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const {ObjectID} = require("mongodb");
@@ -9,7 +12,7 @@ var {User} = require("./models/user");
 
 // create instance of app and listen on specfied port
 var app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 app.use(bodyParser.json()); // Configure app middleware
 
 // route to create todos
