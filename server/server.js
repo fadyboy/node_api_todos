@@ -96,6 +96,21 @@ app.patch("/todos/:id", (req, res) => {
     })
 });
 
+// create route to create a new user
+app.post("/users", (req, res) => {
+    var body = _.pick(req.body, ["email", "password"]);
+    var user = new User(body); // body is an object with email and password properties
+    user.save().then(() => {
+        return user.generateAuthToken()
+        // res.send(doc);
+    }).then((token) => {
+        res.header('x-auth', token).send(user);
+    }).catch((err) => {
+        res.status(400).send(err);
+        
+    })
+});
+
 app.listen(port, () => {
     console.log(`Listening or port ${port}`);
 })
