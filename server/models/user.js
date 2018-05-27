@@ -31,7 +31,7 @@ var userSchema = new mongoose.Schema({
             required: true
         }
     }]
-})
+});
 
 // override toJSON() to return only specified properties from user object
 userSchema.methods.toJSON = function () {
@@ -52,6 +52,24 @@ userSchema.methods.generateAuthToken = function () {
         return token;
     })
     
+}
+
+// create model method by using 'statics' instead of 'methods'
+userSchema.statics.findByToken = function (token) {
+    var User = this;
+    var decoded;
+
+    try {
+        decoded = jwt.verify(token, 'testing123');
+    } catch(e) {
+        return Promise.reject('Invalid authentication');
+    }
+    // wrap nested properties in single quotes
+    return User.findOne({
+        '_id': decoded._id,
+        'tokens.token': token,
+        'tokens.access': 'auth'
+    })
 }
 
 var User = mongoose.model("User", userSchema);

@@ -6,9 +6,10 @@ const bodyParser = require("body-parser");
 const {ObjectID} = require("mongodb");
 const _ = require("lodash");
 
-var {mongoose} = require("./db/mongoose");
-var {Todo} = require("./models/todo");
-var {User} = require("./models/user");
+const {mongoose} = require("./db/mongoose");
+const {Todo} = require("./models/todo");
+const {User} = require("./models/user");
+const {authenticate} = require("./middleware/authenticate");
 
 // create instance of app and listen on specfied port
 var app = express();
@@ -109,6 +110,10 @@ app.post("/users", (req, res) => {
         res.status(400).send(err);
         
     })
+});
+
+app.get("/users/me", authenticate, (req, res) => {
+    res.send(req.user);
 });
 
 app.listen(port, () => {
